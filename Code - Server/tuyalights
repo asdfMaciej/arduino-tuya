@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# Copyright 2022 Maciej Kaszkowiak (maciej@kaszkowiak.org)
+# Apache License 2.0
+import tinytuya
+import sys
+
+# A little global never killed nobody... :)
+global c, WINDOW_LAMP, DESK_LAMP, CEILING
+
+CLIENT_ID = '<Tuya API client ID>'
+SECRET_KEY = '<Tuya API secret key>'
+REGION_KEY = 'eu'
+
+WINDOW_LAMP = "<Lightbulb #1 ID>"
+DESK_LAMP = "<Lightbulb #2 ID>"
+CEILING = "<Lightbulb #3 ID>"
+
+c = tinytuya.Cloud(
+		apiRegion=REGION_KEY, 
+		apiKey=CLIENT_ID, 
+		apiSecret=SECRET_KEY, 
+		apiDeviceID=DESK_LAMP)
+
+
+def set_color(device_id, hsv):
+	commands = {'commands': [
+		{
+			"code": "bright_value_v2",
+			"value": 1000
+		}, 
+		{
+			"code": "switch_led",
+			"value": True
+		},
+		{
+			"code": "work_mode",
+			"value": "colour"
+		},
+		{
+			"code": "colour_data_v2",
+			"value": {
+				"h": hsv[0],
+				"s": hsv[1],
+				"v": hsv[2]
+			}
+		}
+	]}
+	result = c.sendcommand(device_id, commands)
+	print("[*] API response: ", result)
+
+def set_white(device_id, temp=1000, brightness=1000):
+	commands = {'commands': [
+		{
+			"code": "switch_led",
+			"value": True
+		},
+		{
+			"code": "work_mode",
+			"value": "white"
+		},
+		{
+			"code": "bright_value_v2",
+			"value": brightness
+		},
+		{
+			"code": "temp_value_v2",
+			"value": temp
+		}
+	]}
+	result = c.sendcommand(device_id, commands)
+	print("[*] API response: ", result)
+
+def color_all(hsv):
+	set_color(DESK_LAMP, hsv)
+	set_color(WINDOW_LAMP, hsv)
+	set_color(CEILING, hsv)
+
+def set_scene(scene_id):
+	if scene_id == 1:
+		color_all((300, 1000, 1000))
+	elif scene_id == 2:
+		set_white(DESK_LAMP, 200, 300)
+		set_white(WINDOW_LAMP, 400)
+		set_white(CEILING, 400)
+	elif scene_id == 3:
+		set_color(DESK_LAMP, (240, 1000, 1000))
+		set_color(WINDOW_LAMP, (240, 1000, 1000))
+		set_color(CEILING, (0, 1000, 1000))
+	elif scene_id == 4:
+		set_color(DESK_LAMP, (0, 1000, 1000))
+		set_color(WINDOW_LAMP, (0, 1000, 1000))
+		set_color(CEILING, (240, 1000, 1000))
+
+# Pass the first argument, no point in error handling
+set_scene(int(sys.argv[1]))
